@@ -1,15 +1,18 @@
-- name: Run Checkov SCA Scanning
-    if: inputs.action == 'deploy'
-    id: checkov
-    uses: bridgecrewio/checkov-action@master
-    env:
-        PRISMA_API_URL: ${{ secrets.PRISMA_API_URL }}
-        BC_API_KEY: ${{ secrets.BC_API_KEY }}
-    with:
-        framework: sca_package
-        output_format: cli
-        soft_fail: false
-        directory: .
-        # Block on HIGH (CVSS 7.0–8.9) and CRITICAL (CVSS 9.0–10.0).
-        # Checkov has no exact CVSS score threshold; HIGH is the closest to > 8.
-        hard_fail_on: HIGH
+name: GitHub Actions Demo2
+run-name: ${{ github.actor }} is testing out GitHub Actions
+on: [push]
+jobs:
+  Explore-GitHub-Actions:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+
+      - name: Run Prisma Cloud 
+        id: prisma-cloud
+        uses: bridgecrewio/checkov-action@master 
+        env:
+          PRISMA_API_URL: https://api2.prismacloud.io
+        with:
+          log_level: DEBUG
+          api-key: ${{ secrets.BC_API_KEY }}
