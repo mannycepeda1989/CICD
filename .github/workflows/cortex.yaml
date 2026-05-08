@@ -1,5 +1,3 @@
-
-
 name: Cortex CLI Code Scan
 
 on:
@@ -40,6 +38,7 @@ jobs:
         curl -o cortexcli $crtx_url
         chmod +x cortexcli
         ./cortexcli --version
+
     - name: Run Cortex CLI Code Scan
       run: |
         ./cortexcli \
@@ -52,3 +51,8 @@ jobs:
           --branch "${{github.ref_name}}" \
           --source "GITHUB_ACTIONS" \
           --create-repo-if-missing
+
+    # ADDED STEP HERE
+    - name: Clean up Cortex CLI
+      if: always() 
+      run: ./cortexcli clean
