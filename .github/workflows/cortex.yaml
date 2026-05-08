@@ -1,18 +1,39 @@
-name: GitHub Actions Demo2
-run-name: ${{ github.actor }} is testing out GitHub Actions
-on: [push]
+  
 jobs:
-  Explore-GitHub-Actions:
+  cortex-code-scan:
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v2
 
-      - name: Run Prisma Cloud 
-        id: prisma-cloud
-        uses: bridgecrewio/checkov-action@master 
-        env:
-          PRISMA_API_URL: https://api2.prismacloud.io
-        with:
-          log_level: DEBUG
-          api-key: ${{ secrets.BC_API_KEY }}
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 22
+
+    - name: Verify Node.js Version
+      run: node -v
+
+    - name: Download cortexcli
+      run: |
+        set -x
+        crtx_resp=$(curl "${CORTEX_API_URL}/public_api/v1/unified-cli/releases/download-link?os=linux&architecture=amd64" \
+          -H "x-xdr-auth-id: ${CORTEX_API_KEY_ID}" \
+          -H "Authorization: ${CORTEX_API_KEY}")
+        crtx_url=$(echo $crtx_resp | jq -r ".signed_url")
+        curl -o cortexcli $crtx_url
+        chmod +x cortexcli
+        ./cortexcli --version
+    - name: Run Cortex CLI Code Scan
+      run: |
+        ./cortexcli \
+          --api-base-url "${CORTEX_API_URL}" \
+          --api-key "${CORTEX_API_KEY}" \
+          --api-key-id "${CORTEX_API_KEY_ID}" \
+          code scan \
+          --directory "${{github.workspace}}" \
+          --repo-id "${{github.repository}}" \
+          --branch "${{github.ref_name}}" \
+          --source "GITHUB_ACTIONS" \
+          --create-repo-if-missing
