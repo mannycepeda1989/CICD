@@ -1,5 +1,4 @@
-  
-jobs:
+  jobs:
   cortex-code-scan:
     runs-on: ubuntu-latest
 
