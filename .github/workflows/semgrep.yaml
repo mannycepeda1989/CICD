@@ -1,0 +1,134 @@
+name: Cortex Cloud Semgrep Scan
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch: 
+
+jobs:
+  cortexcloud-semgrep-scan:
+    name: cortexcloud-semgrep-scan
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read 
+
+    env:
+      SEMGREP_VERSION: "1.123.0"
+      SARIF_PATH: "artifacts/semgrep_report.sarif"
+      CORTEX_3RD_API_URL: ${{secrets.CORTEX_3RD_API_URL}}
+      CORTEX_3RD_API_KEY_ID: ${{secrets.CORTEX_3RD_API_KEY_ID}}
+      CORTEX_3RD_API_KEY: ${{secrets.CORTEX_3RD_API_KEY}}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies (Python, jq, curl)
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y python3 python3-pip jq curl git
+
+      - name: Install Semgrep
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install semgrep==${SEMGREP_VERSION}
+
+      - name: Prepare artifacts directory
+        run: |
+          mkdir -p artifacts
+
+      - name: Detect Git repository and run Semgrep
+        id: semgrep
+        shell: bash
+        continue-on-error: true
+        run: |
+          if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+            echo "Git repository detected"
+            semgrep scan --config "p/cwe-top-25" \
+                         --sarif --output "${SARIF_PATH}" .
+          else
+            echo "No Git repository, scanning via --include"
+            semgrep scan --config "p/cwe-top-25" \
+                         --include '**/*' \
+                         --sarif --output "${SARIF_PATH}" .
+          fi
+
+      - name: Upload report as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: semgrep_report
+          path: ${{env.SARIF_PATH}}
+          retention-days: 3
+
+      - name: Check if SARIF has findings
+        if: always()
+        run: |
+          set -e
+          if [ ! -s "${SARIF_PATH}" ]; then
+            echo "SARIF does not exist or is empty."
+            exit 0
+          fi
+
+          results_count=$(jq -r '.runs[0].results | length // 0' "${SARIF_PATH}" 2>/dev/null || echo 0)
+          echo "SARIF results_count=${results_count}"
+
+          if [ "${results_count}" = "0" ]; then
+            echo "No findings in SARIF."
+            exit 0
+          fi
+
+      - name: Send SARIF to Cortex Cloud
+        if: always()
+        shell: bash
+        env:
+          BRANCH_NAME: ${{github.head_ref || github.ref_name}}
+        run: |
+          echo "Sending data to Cortex Cloud"
+
+          if [ ! -s "${SARIF_PATH}" ]; then
+            echo "SARIF file not found or empty: ${SARIF_PATH}"
+            exit 0
+          fi
+
+          # Safely append the branch name depending on if the URL already has query parameters
+          if [[ "${CORTEX_3RD_API_URL}" == *"?"* ]]; then
+            TARGET_URL="${CORTEX_3RD_API_URL}&branch=${BRANCH_NAME}"
+          else
+            TARGET_URL="${CORTEX_3RD_API_URL}?branch=${BRANCH_NAME}"
+          fi
+
+          http_code=$(curl -sS -X POST \
+            "${TARGET_URL}" \
+            -H "Authorization:${CORTEX_3RD_API_KEY}" \
+            -H "x-crtx-auth-id: ${CORTEX_3RD_API_KEY_ID}" \
+            -H "Content-Type: application/json" \
+            --data-binary "@${SARIF_PATH}" \
+            -o /tmp/cortex_response.json \
+            -w "%{http_code}")
+
+          echo "HTTP_STATUS:${http_code}"
+          echo "Cortex Response:"
+          cat /tmp/cortex_response.json || true
+
+          # 200 - OK / 201 - queued successfully
+          if [ "${http_code}" = "200" ] || [ "${http_code}" = "201" ]; then
+            exit 0
+          fi
+
+          # Known case: SARIF without findings → Cortex responds 422 with specific message
+          if [ "${http_code}" = "422" ]; then
+            msg=$(jq -r '.message // ""' /tmp/cortex_response.json 2>/dev/null || echo "")
+            details=$(jq -r '.details // ""' /tmp/cortex_response.json 2>/dev/null || echo "")
+
+            if [[ "${msg}" == *"No results found in run"* ]] || [[ "${details}" == *"No results found in run"* ]]; then
+              echo "::warning::Cortex returned 422 (run without results). Treating as success."
+              exit 0
+            fi
+          fi
+
+          # Any other case: fail
+          echo "::error::Failed to send SARIF to Cortex Cloud (HTTP ${http_code})"
+          exit 1
