@@ -100,7 +100,7 @@ jobs:
           fi
 
           http_code=$(curl -sS -X POST \
-            "https://api-tac-c1.xdr.us.paloaltonetworks.com/public_api/appsec/v1/collectors/69ff7d98004c0a2aac12bf48?repository_id=63ac357e6d0916c6f33ee6895ae56090782f2524e87afd7ede87f65c1305bbd5"" \
+            "https://api-tac-c1.xdr.us.paloaltonetworks.com/public_api/appsec/v1/collectors/69ff7d98004c0a2aac12bf48?repository_id=63ac357e6d0916c6f33ee6895ae56090782f2524e87afd7ede87f65c1305bbd5" \
             -H "x-crtx-auth-id: ${CORTEX_3RD_API_KEY_ID}" \
             -H "Authorization: ${CORTEX_3RD_API_KEY}" \
             -H "Content-Type: application/json" \
