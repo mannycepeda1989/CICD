@@ -1,17 +1,20 @@
 name: Cortex Cloud Semgrep Scan
 
+# 1. MISSING: You need an 'on' block to define when this workflow runs.
 on:
   push:
     branches: [ "main", "master" ]
   pull_request:
     branches: [ "main", "master" ]
-  workflow_dispatch: 
+  workflow_dispatch: # Allows you to run this manually from the Actions tab
 
+# 2. MISSING: You need the 'jobs' key to encapsulate your job.
 jobs:
   cortexcloud-semgrep-scan:
     name: cortexcloud-semgrep-scan
     runs-on: ubuntu-latest
     
+    # Optional but recommended: explicitly set permissions for the GITHUB_TOKEN
     permissions:
       contents: read 
 
@@ -19,6 +22,7 @@ jobs:
       SEMGREP_VERSION: "1.123.0"
       SARIF_PATH: "artifacts/semgrep_report.sarif"
       CORTEX_3RD_API_URL: ${{secrets.CORTEX_3RD_API_URL}}
+      CORTEX_ASSET_ID: ${{secrets.CORTEX_ASSET_ID}}
       CORTEX_3RD_API_KEY_ID: ${{secrets.CORTEX_3RD_API_KEY_ID}}
       CORTEX_3RD_API_KEY: ${{secrets.CORTEX_3RD_API_KEY}}
 
@@ -43,6 +47,7 @@ jobs:
       - name: Detect Git repository and run Semgrep
         id: semgrep
         shell: bash
+        # Note: Added 'continue-on-error' (see explanation below)
         continue-on-error: true
         run: |
           if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
@@ -93,15 +98,8 @@ jobs:
             exit 0
           fi
 
-          # Safely append the branch name depending on if the URL already has query parameters
-          if [[ "${CORTEX_3RD_API_URL}" == *"?"* ]]; then
-            TARGET_URL="${CORTEX_3RD_API_URL}&branch=${BRANCH_NAME}"
-          else
-            TARGET_URL="${CORTEX_3RD_API_URL}?branch=${BRANCH_NAME}"
-          fi
-
           http_code=$(curl -sS -X POST \
-            "${TARGET_URL}" \
+            "${CORTEX_3RD_API_URL}?repository_id=${CORTEX_ASSET_ID}&branch=${BRANCH_NAME}" \
             -H "Authorization:${CORTEX_3RD_API_KEY}" \
             -H "x-crtx-auth-id: ${CORTEX_3RD_API_KEY_ID}" \
             -H "Content-Type: application/json" \
