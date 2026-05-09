@@ -25,6 +25,7 @@ jobs:
       CORTEX_ASSET_ID: ${{secrets.CORTEX_ASSET_ID}}
       CORTEX_3RD_API_KEY_ID: ${{secrets.CORTEX_3RD_API_KEY_ID}}
       CORTEX_3RD_API_KEY: ${{secrets.CORTEX_3RD_API_KEY}}
+      BRANCH_NAME: ${{secrets.BRANCH_NAME}}
 
     steps:
       - name: Checkout
