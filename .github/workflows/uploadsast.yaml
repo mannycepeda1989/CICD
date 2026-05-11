@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      SARIF_PATH: "semgrep_report-no-vul.sarif"
+      SARIF_PATH: "semgrep_report-vul.sarif"
       CORTEX_API_URL: https://api-tac-c1.xdr.us.paloaltonetworks.com/public_api/appsec/v1/collectors/69ff7d98004c0a2aac12bf48?repository_id=63ac357e6d0916c6f33ee6895ae56090782f2524e87afd7ede87f65c1305bbd5
       CORTEX_3RD_API_KEY_ID: ${{secrets.CORTEX_3RD_API_KEY_ID}}
       CORTEX_3RD_API_KEY: ${{secrets.CORTEX_3RD_API_KEY}}
