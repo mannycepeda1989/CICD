@@ -50,6 +50,7 @@ jobs:
           --repo-id "${{github.repository}}" \
           --branch "${{github.ref_name}}" \
           --source "GITHUB_ACTIONS" \
+          --upload-mode "upload" \
           --create-repo-if-missing
 
     # ADDED STEP HERE
