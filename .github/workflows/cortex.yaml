@@ -45,7 +45,7 @@ jobs:
           --api-key "${CORTEX_API_KEY}" \
           --api-key-id "${CORTEX_API_KEY_ID}" \
           --support \
-          --log-level "debug" \
+          --log-level DEBUG \
           code scan \
           --directory "${{github.workspace}}" \
           --repo-id "${{github.repository}}" \
