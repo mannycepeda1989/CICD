@@ -1,3 +1,4 @@
+#test
 resource "azurerm_managed_disk" "example" {
   name                 = "terragoat-disk-${var.environment}"
   location             = var.location
@@ -67,3 +68,4 @@ resource "azurerm_storage_account_network_rules" "test" {
   ip_rules       = ["127.0.0.1"]
   bypass         = ["Metrics"]
 }
+#test
