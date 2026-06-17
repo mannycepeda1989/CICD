@@ -1,8 +1,6 @@
 name: Prisma Cloud IaC Scan
 
 on:
-  push:
-    branches: [ "**" ]
   pull_request:
     branches: [ "**" ]
 
