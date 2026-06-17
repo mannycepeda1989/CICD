@@ -1,7 +1,22 @@
-steps:
+name: Prisma Cloud IaC Scan
+
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+    branches: [ "**" ]
+
+jobs:
+  prisma_cloud_scan:
+    name: Prisma Cloud Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Check out the repository code
       - name: Checkout repo
         uses: actions/checkout@v2
 
+      # Step 2: Run Prisma Cloud via Checkov Action
       - name: Run Prisma Cloud 
         id: prisma-cloud
         uses: bridgecrewio/checkov-action@master
