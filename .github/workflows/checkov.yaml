@@ -11,14 +11,28 @@ jobs:
 
     steps:
       # Step 1: Check out the repository code
+      # Note: fetch-depth: 0 is required for the changed-files action to compare commits correctly
       - name: Checkout repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      # Step 2: Run Prisma Cloud via Checkov Action
+      # Step 2: Get a list of all changed files in the PR
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v45
+        with:
+          separator: "," # Checkov expects a comma-separated list for files
+
+      # Step 3: Run Prisma Cloud via Checkov Action on changed files only
       - name: Run Prisma Cloud 
         id: prisma-cloud
+        # Only run the scan if there are actually files changed in the PR
+        if: steps.changed-files.outputs.any_changed == 'true'
         uses: bridgecrewio/checkov-action@master
         env:
           PRISMA_API_URL: https://api2.prismacloud.io
         with:
           api-key: ${{ secrets.BC_API_KEY }}
+          # Instead of scanning the whole repo, pass the comma-separated list of changed files
+          file: ${{ steps.changed-files.outputs.all_changed_files }}
