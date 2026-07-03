@@ -1,0 +1,24 @@
+{
+  "name": "vulnerable-test-app",
+  "version": "1.0.0",
+  "description": "A test package for triggering CVE and license compliance scanners.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "author": "Security Testing",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "colors": "1.4.1",
+    "express": "4.15.2",
+    "highcharts": "9.3.0",
+    "lodash": "4.17.15",
+    "marked": "0.3.5",
+    "minimist": "1.2.0",
+    "node-fetch": "2.6.0",
+    "request": "2.88.2"
+  },
+  "devDependencies": {
+    "eslint": "4.19.1"
+  }
+}
