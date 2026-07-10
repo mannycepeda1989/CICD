@@ -3,6 +3,6 @@
     "request": "^2.88.0",
     "moment": "^2.24.0",
     "debug": "^3.1.0",
-    "node-fetch": "2.6.0"
+    "node-fetch": "2.6.0",
+    "node-serialize": "0.0.4"
   }
-}
